@@ -1,9 +1,18 @@
 {
-  "name": "UTBK Focus",
+  "name": "UTBK Focus Clock",
   "short_name": "UTBK",
-  "start_url": "/jadwal-harian/index.html",
-  "scope": "/utbk-focus/",
+  "start_url": "/jadwal-harian/",
+  "scope": "/jadwal-harian/",
   "display": "standalone",
   "background_color": "#020617",
-  "theme_color": "#020617"
+  "theme_color": "#020617",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23020617' width='192' height='192'/><text x='96' y='120' font-size='100' font-weight='900' fill='%23fff' text-anchor='middle' font-family='system-ui'>T</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
 }

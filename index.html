@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -10,304 +12,424 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
 
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <link rel="manifest" href="/jadwal-harian/manifest.json">
+  <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#000000">
 
   <style>
     @keyframes breathe {
-      0%, 100% { opacity: 1 }
-      50% { opacity: 0.7 }
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.7
+      }
     }
+
     @keyframes slideUp {
-      from { transform: translateY(100%); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
+
     @keyframes slideDown {
-      from { transform: translateY(0); opacity: 1; }
-      to { transform: translateY(100%); opacity: 0; }
+      from {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      to {
+        transform: translateY(100%);
+        opacity: 0;
+      }
     }
-    
+
     * {
       -webkit-tap-highlight-color: transparent;
       margin: 0;
       padding: 0;
     }
-    
-    html, body {
+
+    html,
+    body {
       width: 100%;
       height: 100%;
       overflow: hidden;
       position: fixed;
       background: #000;
     }
-    
+
     body {
       -webkit-user-select: none;
       user-select: none;
       touch-action: manipulation;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     }
-    
+
     .breathe {
       animation: breathe 4s ease-in-out infinite;
     }
-    
+
     .slide-up {
       animation: slideUp 0.3s ease-out forwards;
     }
-    
+
     .slide-down {
       animation: slideDown 0.3s ease-out forwards;
     }
-    
+
     .hidden-ui {
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.3s ease;
     }
-    
+
     .visible-ui {
       opacity: 1;
       pointer-events: auto;
       transition: opacity 0.3s ease;
+    }
+
+    .countdown-fullscreen {
+      font-size: min(28vw, 20vh) !important;
+      animation: scaleUp 0.4s ease-out forwards;
+    }
+
+    @keyframes scaleUp {
+      from {
+        font-size: min(18vw, 14vh);
+        opacity: 0.8;
+        transform: translateY(0);
+      }
+      to {
+        font-size: min(28vw, 20vh);
+        opacity: 1;
+        transform: translateY(3rem);
+      }
     }
   </style>
 </head>
 
 <body class="bg-black">
 
-<!-- MAIN CONTAINER -->
-<div id="mainContainer" class="w-full h-full flex flex-col items-center justify-center relative">
+  <!-- MAIN CONTAINER -->
+  <div id="mainContainer" class="w-full h-full flex flex-col items-center justify-center relative">
 
-  <!-- TOP INFO (dismissible) -->
-  <div id="topInfo" class="absolute top-0 left-0 right-0 pt-8 pb-4 text-center visible-ui">
-    <p id="now" class="text-2xl sm:text-3xl font-medium tracking-wide text-slate-500"></p>
-  </div>
+    <!-- TOP INFO (dismissible) -->
+    <div id="topInfo" class="absolute top-0 left-0 right-0 pt-8 pb-4 text-center visible-ui">
+      <p id="now" class="text-2xl sm:text-3xl font-medium tracking-wide text-slate-500"></p>
+    </div>
 
-  <!-- CENTER: COUNTDOWN -->
-  <div class="flex-1 flex items-center justify-center w-full px-4">
-    <div class="text-center">
-      <!-- Main Countdown -->
-      <p id="countdown"
-        class="font-black tracking-tight text-white tabular-nums leading-none"
-        style="font-size: min(18vw, 14vh);">
-        00:00:00
-      </p>
-      
-      <!-- Next Session Info (compact) -->
-      <div id="sessionInfo" class="visible-ui transition-opacity duration-300 mt-8">
-        <p class="text-xs text-slate-600 uppercase tracking-wide mb-1">Next</p>
-        <p id="nextSession" class="text-xl font-bold text-slate-400"></p>
+    <!-- CENTER: COUNTDOWN -->
+    <div class="flex-1 flex items-center justify-center w-full px-4">
+      <div class="text-center">
+        <!-- Main Countdown -->
+        <p id="countdown" class="font-black tracking-tight text-white tabular-nums leading-none"
+          style="font-size: min(18vw, 14vh);">
+          00:00:00
+        </p>
+
+        <!-- Next Session Info (compact) -->
+        <div id="sessionInfo" class="visible-ui transition-opacity duration-300 mt-8">
+          <p class="text-xs text-slate-600 uppercase tracking-wide mb-1">Next</p>
+          <p id="nextSession" class="text-xl font-bold text-slate-400"></p>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- BOTTOM: STATUS & BUTTON (floating, dismissible) -->
-  <div id="bottomUI" class="absolute bottom-0 left-0 right-0 pb-12 px-6 text-center visible-ui">
-    <div class="max-w-sm mx-auto space-y-4">
-      <p id="status" class="text-sm text-slate-400 tracking-wider uppercase font-semibold">
-        Tap to begin
-      </p>
+    <!-- BOTTOM: STATUS & BUTTON (floating, dismissible) -->
+    <div id="bottomUI" class="absolute bottom-0 left-0 right-0 pb-12 px-6 text-center visible-ui">
+      <div class="max-w-sm mx-auto space-y-4">
+        <p id="status" class="text-sm text-slate-400 tracking-wider uppercase font-semibold">
+          Tap to begin
+        </p>
 
-      <button id="enable"
-        class="w-full max-w-xs px-8 py-4 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 rounded-2xl text-sm font-bold tracking-wider uppercase transition-all duration-200 text-white shadow-lg">
-        Enable Notifications
-      </button>
-      
-      <p class="text-xs text-slate-600 mt-4 font-medium">Double tap to hide UI</p>
+        <button id="enable"
+          class="w-full max-w-xs px-8 py-4 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 rounded-2xl text-sm font-bold tracking-wider uppercase transition-all duration-200 text-white shadow-lg">
+          Enable Notifications
+        </button>
+
+        <p class="text-xs text-slate-600 mt-4 font-medium">Double tap to hide UI</p>
+      </div>
     </div>
+
   </div>
 
-</div>
+  <!-- AUDIO -->
+  <audio id="alarm" src="/alarm.mp3" preload="auto"></audio>
 
-<!-- AUDIO -->
-<audio id="alarm" src="/jadwal-harian/alarm.mp3" preload="auto"></audio>
+  <script>
+    /* ======================
+       CONFIG
+       ====================== */
+    const BASE_PATH = "/"; // Use root for dev, change to "/jadwal-harian/" for production
+    const alarm = document.getElementById("alarm");
+    let audioUnlocked = false;
+    let alarmPlayed = false;
+    let uiVisible = localStorage.getItem("uiVisible") !== "false"; // Persist UI state
+    let lastTap = 0;
 
-<script>
-/* ======================
-   CONFIG
-   ====================== */
-const BASE_PATH = "/jadwal-harian/";
-const alarm = document.getElementById("alarm");
-let audioUnlocked = false;
-let alarmPlayed = false;
-let uiVisible = true;
-let lastTap = 0;
+    /* ======================
+       SCHEDULE
+       ====================== */
+    const schedules = {
+      weekday: ["04:45", "16:30", "19:00", "21:00"],
+      saturday: ["19:00", "20:45"],
+      sunday: ["05:00", "07:00", "09:15", "13:00", "15:00", "19:00"]
+    };
 
-/* ======================
-   SCHEDULE
-   ====================== */
-const schedules = {
-  weekday: ["04:45","16:30","19:00","21:00"],
-  saturday: ["19:00","20:45"],
-  sunday: ["05:00","07:00","09:15","13:00","15:00","19:00"]
-};
-
-function getTodaySchedule() {
-  const d = new Date().getDay();
-  if (d === 6) return schedules.saturday;
-  if (d === 0) return schedules.sunday;
-  return schedules.weekday;
-}
-
-/* ======================
-   COUNTDOWN LOGIC
-   ====================== */
-function getNextSession() {
-  const now = new Date();
-  const today = now.toISOString().split("T")[0];
-  for (const time of getTodaySchedule()) {
-    const t = new Date(`${today}T${time}:00`);
-    if (t > now) return t;
-  }
-  return null;
-}
-
-function updateClock() {
-  const now = new Date();
-  document.getElementById("now").innerText =
-    now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-
-  const next = getNextSession();
-  const countdownEl = document.getElementById("countdown");
-
-  if (!next) {
-    document.getElementById("nextSession").innerText = "No more today";
-    countdownEl.innerText = "00:00:00";
-    countdownEl.style.color = "#334155";
-    return;
-  }
-
-  document.getElementById("nextSession").innerText =
-    next.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
-
-  const diff = next - now;
-
-  const h = Math.floor(diff / 3600000);
-  const m = Math.floor(diff / 60000) % 60;
-  const s = Math.floor(diff / 1000) % 60;
-
-  countdownEl.innerText =
-    `${String(h).padStart(2,"0")} : ${String(m).padStart(2,"0")} : ${String(s).padStart(2,"0")}`;
-
-  // Color states - bold and clear
-  if (diff <= 60000) { // Last minute
-    countdownEl.style.color = "#ef4444";
-  } else if (diff <= 300000) { // Last 5 minutes
-    countdownEl.style.color = "#fb923c";
-  } else { // Normal
-    countdownEl.style.color = "#ffffff";
-  }
-
-  // AUDIO
-  if (diff <= 1000 && audioUnlocked && !alarmPlayed) {
-    alarm.play();
-    alarmPlayed = true;
-    document.getElementById("status").innerText = "SESSION STARTED";
-    document.getElementById("status").style.color = "#ef4444";
-  }
-}
-
-setInterval(updateClock, 1000);
-updateClock();
-
-/* ======================
-   UI TOGGLE (Double Tap)
-   ====================== */
-document.getElementById("mainContainer").addEventListener("click", function(e) {
-  // Ignore if clicking button
-  if (e.target.id === "enable") return;
-  
-  const currentTime = new Date().getTime();
-  const tapGap = currentTime - lastTap;
-  
-  if (tapGap < 300 && tapGap > 0) {
-    // Double tap detected
-    toggleUI();
-  }
-  
-  lastTap = currentTime;
-});
-
-function toggleUI() {
-  uiVisible = !uiVisible;
-  const topInfo = document.getElementById("topInfo");
-  const bottomUI = document.getElementById("bottomUI");
-  const sessionInfo = document.getElementById("sessionInfo");
-  
-  if (uiVisible) {
-    topInfo.classList.remove("hidden-ui");
-    topInfo.classList.add("visible-ui");
-    bottomUI.classList.remove("hidden-ui");
-    bottomUI.classList.add("visible-ui");
-    sessionInfo.classList.remove("hidden-ui");
-    sessionInfo.classList.add("visible-ui");
-  } else {
-    topInfo.classList.remove("visible-ui");
-    topInfo.classList.add("hidden-ui");
-    bottomUI.classList.remove("visible-ui");
-    bottomUI.classList.add("hidden-ui");
-    sessionInfo.classList.remove("visible-ui");
-    sessionInfo.classList.add("hidden-ui");
-  }
-}
-
-/* ======================
-   ENABLE NOTIFICATION
-   ====================== */
-document.getElementById("enable").onclick = async function(e) {
-  e.stopPropagation(); // Prevent double-tap detection
-  
-  // Unlock audio
-  alarm.play().then(() => {
-    alarm.pause();
-    alarm.currentTime = 0;
-    audioUnlocked = true;
-  });
-
-  if ("serviceWorker" in navigator) {
-    const perm = await Notification.requestPermission();
-    if (perm === "granted") {
-      const reg = await navigator.serviceWorker.register(
-        BASE_PATH + "sw.js",
-        { scope: BASE_PATH }
-      );
-      scheduleNotifications(reg);
+    function getTodaySchedule() {
+      const d = new Date().getDay();
+      if (d === 6) return schedules.saturday;
+      if (d === 0) return schedules.sunday;
+      return schedules.weekday;
     }
-  }
 
-  document.getElementById("status").innerText = "READY TO FOCUS";
-  this.style.display = "none";
-};
+    /* ======================
+       COUNTDOWN LOGIC
+       ====================== */
+    function getNextSession() {
+      const now = new Date();
+      const today = now.toISOString().split("T")[0];
+      const schedule = getTodaySchedule();
 
-function scheduleNotifications(reg) {
-  const now = new Date();
-  const today = now.toISOString().split("T")[0];
+      for (const time of schedule) {
+        const t = new Date(`${today}T${time}:00`);
+        if (t > now) return t;
+      }
 
-  getTodaySchedule().forEach(time => {
-    const date = new Date(`${today}T${time}:00`);
-    if (date > now) {
-      reg.showNotification("UTBK Focus", {
-        body: `Waktunya belajar (${time})`,
-        tag: time,
-        requireInteraction: true,
-        vibrate: [200,100,200]
+      // No more sessions today, get first session tomorrow
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split("T")[0];
+      const firstSession = schedule[0];
+      return new Date(`${tomorrowStr}T${firstSession}:00`);
+    }
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById("now").innerText =
+        now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+      const next = getNextSession();
+      const countdownEl = document.getElementById("countdown");
+
+      if (!next) {
+        document.getElementById("nextSession").innerText = "No more today";
+        countdownEl.innerText = "00:00:00";
+        countdownEl.style.color = "#334155";
+        return;
+      }
+
+      document.getElementById("nextSession").innerText =
+        next.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+
+      const diff = next - now;
+
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor(diff / 60000) % 60;
+      const s = Math.floor(diff / 1000) % 60;
+
+      countdownEl.innerText =
+        `${String(h).padStart(2, "0")} : ${String(m).padStart(2, "0")} : ${String(s).padStart(2, "0")}`;
+
+      // Color states - bold and clear
+      if (diff <= 60000) { // Last minute
+        countdownEl.style.color = "#ef4444";
+      } else if (diff <= 300000) { // Last 5 minutes
+        countdownEl.style.color = "#fb923c";
+      } else { // Normal
+        countdownEl.style.color = "#ffffff";
+      }
+
+      // AUDIO & NOTIFICATION TRIGGER
+      if (diff <= 1000 && diff >= -5000 && !alarmPlayed) {
+        alarmPlayed = true;
+
+        // Play audio if unlocked
+        if (audioUnlocked) {
+          alarm.play().catch(e => console.warn("Audio play failed:", e));
+        }
+
+        // Visual feedback
+        document.getElementById("status").innerText = "SESSION STARTED";
+        document.getElementById("status").style.color = "#ef4444";
+
+        // Visual pulse animation
+        countdownEl.classList.add("breathe");
+
+        // Haptic feedback
+        if (navigator.vibrate) {
+          navigator.vibrate([200, 100, 200, 100, 200]);
+        }
+      } else if (diff > 5000 && alarmPlayed) {
+        // Reset for next session
+        alarmPlayed = false;
+        countdownEl.classList.remove("breathe");
+      }
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    /* ======================
+       UI TOGGLE (Double Tap)
+       ====================== */
+    document.getElementById("mainContainer").addEventListener("click", function (e) {
+      // Ignore if clicking button
+      if (e.target.id === "enable") return;
+
+      const currentTime = new Date().getTime();
+      const tapGap = currentTime - lastTap;
+
+      if (tapGap < 300 && tapGap > 0) {
+        // Double tap detected
+        toggleUI();
+      }
+
+      lastTap = currentTime;
+    });
+
+    function toggleUI() {
+      uiVisible = !uiVisible;
+      localStorage.setItem("uiVisible", uiVisible); // Persist preference
+      
+      const topInfo = document.getElementById("topInfo");
+      const bottomUI = document.getElementById("bottomUI");
+      const sessionInfo = document.getElementById("sessionInfo");
+      const countdown = document.getElementById("countdown");
+      
+      if (uiVisible) {
+        topInfo.classList.remove("hidden-ui");
+        topInfo.classList.add("visible-ui");
+        bottomUI.classList.remove("hidden-ui");
+        bottomUI.classList.add("visible-ui");
+        sessionInfo.classList.remove("hidden-ui");
+        sessionInfo.classList.add("visible-ui");
+        countdown.classList.remove("countdown-fullscreen");
+      } else {
+        topInfo.classList.remove("visible-ui");
+        topInfo.classList.add("hidden-ui");
+        bottomUI.classList.remove("visible-ui");
+        bottomUI.classList.add("hidden-ui");
+        sessionInfo.classList.remove("visible-ui");
+        sessionInfo.classList.add("hidden-ui");
+        countdown.classList.add("countdown-fullscreen");
+      }
+    }
+
+    /* ======================
+       ENABLE NOTIFICATION
+       ====================== */
+    document.getElementById("enable").onclick = async function (e) {
+      e.stopPropagation(); // Prevent double-tap detection
+
+      const btn = this;
+      btn.disabled = true;
+      btn.style.opacity = "0.5";
+
+      try {
+        // Unlock audio
+        alarm.play().then(() => {
+          alarm.pause();
+          alarm.currentTime = 0;
+          audioUnlocked = true;
+        }).catch(e => {
+          console.warn("Audio unlock failed:", e);
+        });
+
+        if ("serviceWorker" in navigator && "Notification" in window) {
+          const perm = await Notification.requestPermission();
+          if (perm === "granted") {
+            try {
+              const reg = await navigator.serviceWorker.register(
+                BASE_PATH + "sw.js",
+                { scope: BASE_PATH }
+              );
+              console.log("Service Worker registered successfully");
+              scheduleNotifications(reg);
+              document.getElementById("status").innerText = "READY TO FOCUS";
+              btn.style.display = "none";
+            } catch (swError) {
+              console.error("Service Worker registration failed:", swError);
+              console.error("SW URL:", BASE_PATH + "sw.js");
+              // App still works with visual alerts - don't fail
+              document.getElementById("status").innerText = "Ready (visual alerts active)";
+              document.getElementById("status").style.color = "#10b981";
+              btn.style.display = "none";
+            }
+          } else {
+            console.warn("Notifications permission denied");
+            document.getElementById("status").innerText = "Ready (visual alerts active)";
+            document.getElementById("status").style.color = "#10b981";
+            btn.style.display = "none";
+          }
+        } else {
+          console.warn("Service Workers or Notifications not available");
+          document.getElementById("status").innerText = "Ready (visual alerts active)";
+          document.getElementById("status").style.color = "#10b981";
+          btn.style.display = "none";
+        }
+      } catch (error) {
+        console.error("Enable error:", error);
+        document.getElementById("status").innerText = "Error - try again";
+        document.getElementById("status").style.color = "#ef4444";
+        btn.disabled = false;
+        btn.style.opacity = "1";
+      }
+    };
+
+    function scheduleNotifications(reg) {
+      const now = new Date();
+      const today = now.toISOString().split("T")[0];
+      const schedule = getTodaySchedule();
+      let notificationCount = 0;
+
+      // Use navigator.serviceWorker.ready for active SW
+      navigator.serviceWorker.ready.then(activeReg => {
+        schedule.forEach(time => {
+          const date = new Date(`${today}T${time}:00`);
+          if (date > now) {
+            try {
+              activeReg.showNotification("UTBK Focus", {
+                body: `Waktunya belajar (${time})`,
+                tag: time,
+                requireInteraction: true,
+                vibrate: [200, 100, 200]
+              });
+              notificationCount++;
+            } catch (error) {
+              console.error("Failed to show notification for", time, error);
+            }
+          }
+        });
+        console.log(`Scheduled ${notificationCount} notifications for today`);
+      }).catch(error => {
+        console.error("Service Worker not ready:", error);
       });
     }
-  });
-}
 
-/* ======================
-   PREVENT BOUNCE/SCROLL
-   ====================== */
-document.addEventListener("touchmove", function(e) {
-  e.preventDefault();
-}, { passive: false });
-</script>
+    /* ======================
+       PREVENT BOUNCE/SCROLL
+       ====================== */
+    document.addEventListener("touchmove", function (e) {
+      e.preventDefault();
+    }, { passive: false });
+  </script>
 
 </body>
+
 </html>

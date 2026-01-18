@@ -2,7 +2,10 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>UTBK Focus Clock</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
@@ -12,23 +15,27 @@
 
   <style>
     @keyframes pulseSoft {
-      0%, 100% { opacity: 1 }
-      50% { opacity: .7 }
-    }
-    @keyframes glow {
-      0%, 100% { text-shadow: 0 0 20px rgba(99, 102, 241, 0.5), 0 0 40px rgba(99, 102, 241, 0.3); }
-      50% { text-shadow: 0 0 30px rgba(99, 102, 241, 0.8), 0 0 60px rgba(99, 102, 241, 0.5); }
+      0%, 100% { opacity: 0.95 }
+      50% { opacity: 0.85 }
     }
     .pulse-soft {
-      animation: pulseSoft 2s ease-in-out infinite;
+      animation: pulseSoft 3s ease-in-out infinite;
     }
-    .glow-text {
-      animation: glow 2s ease-in-out infinite;
+    * {
+      -webkit-tap-highlight-color: transparent;
     }
     body {
       touch-action: none;
       -webkit-user-select: none;
       user-select: none;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    html {
+      overflow: hidden;
+      height: 100%;
     }
   </style>
 </head>
@@ -36,35 +43,35 @@
 <body class="bg-black text-white overflow-hidden">
 
 <!-- FULLSCREEN LANDSCAPE CLOCK -->
-<div class="w-screen h-screen flex flex-col items-center justify-center p-6 md:p-8">
+<div class="w-screen h-screen flex flex-col items-center justify-center px-4 py-6 sm:p-8">
 
   <!-- CURRENT TIME (small, top) -->
-  <div class="mb-4 md:mb-6">
-    <p id="now" class="text-2xl md:text-3xl font-light tracking-wider text-slate-500"></p>
+  <div class="mb-3 sm:mb-4">
+    <p id="now" class="text-xl sm:text-2xl md:text-3xl font-light tracking-wide text-slate-600"></p>
   </div>
 
   <!-- COUNTDOWN (HUGE CENTER) -->
-  <div class="flex-1 flex flex-col items-center justify-center">
+  <div class="flex-1 flex flex-col items-center justify-center w-full">
     <p id="countdown"
-      class="text-8xl md:text-[12rem] lg:text-[16rem] font-bold tracking-tight text-white glow-text tabular-nums leading-none">
+      class="text-7xl sm:text-8xl md:text-9xl lg:text-[11rem] xl:text-[14rem] font-bold tracking-tighter text-white tabular-nums leading-none">
       00:00:00
     </p>
     
     <!-- Next session info -->
-    <div class="mt-6 md:mt-8 text-center">
-      <p class="text-sm md:text-base text-slate-600 uppercase tracking-widest mb-1">Next Session</p>
-      <p id="nextSession" class="text-2xl md:text-3xl font-medium text-indigo-400"></p>
+    <div class="mt-4 sm:mt-6 md:mt-8 text-center">
+      <p class="text-xs sm:text-sm text-slate-700 uppercase tracking-widest mb-1">Next Session</p>
+      <p id="nextSession" class="text-xl sm:text-2xl md:text-3xl font-medium text-indigo-500"></p>
     </div>
   </div>
 
   <!-- BOTTOM STATUS & BUTTON -->
-  <div class="w-full max-w-md text-center space-y-4">
-    <p id="status" class="text-xs md:text-sm text-slate-500 tracking-wide uppercase">
+  <div class="w-full max-w-md text-center space-y-3 pb-safe">
+    <p id="status" class="text-xs sm:text-sm text-slate-600 tracking-wide uppercase">
       Ready to focus
     </p>
 
     <button id="enable"
-      class="px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-xs md:text-sm font-medium tracking-wider uppercase transition-all duration-300 backdrop-blur-sm">
+      class="px-6 py-2.5 sm:px-8 sm:py-3 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-full text-xs sm:text-sm font-medium tracking-wider uppercase transition-all duration-200">
       Enable Notifications
     </button>
   </div>
@@ -123,7 +130,7 @@ function updateClock() {
   if (!next) {
     document.getElementById("nextSession").innerText = "No more sessions today";
     countdownEl.innerText = "00:00:00";
-    countdownEl.className = "text-8xl md:text-[12rem] lg:text-[16rem] font-bold tracking-tight text-slate-700 tabular-nums leading-none";
+    countdownEl.className = "text-7xl sm:text-8xl md:text-9xl lg:text-[11rem] xl:text-[14rem] font-bold tracking-tighter text-slate-800 tabular-nums leading-none";
     return;
   }
 
@@ -140,12 +147,12 @@ function updateClock() {
     `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
 
   // Visual states based on time remaining
-  if (diff <= 60000) { // Last minute - RED
-    countdownEl.className = "text-8xl md:text-[12rem] lg:text-[16rem] font-bold tracking-tight text-red-500 glow-text tabular-nums leading-none";
-  } else if (diff <= 300000) { // Last 5 minutes - YELLOW
-    countdownEl.className = "text-8xl md:text-[12rem] lg:text-[16rem] font-bold tracking-tight text-yellow-400 glow-text tabular-nums leading-none";
-  } else { // Normal - WHITE
-    countdownEl.className = "text-8xl md:text-[12rem] lg:text-[16rem] font-bold tracking-tight text-white glow-text tabular-nums leading-none";
+  if (diff <= 60000) { // Last minute - RED (dim)
+    countdownEl.className = "text-7xl sm:text-8xl md:text-9xl lg:text-[11rem] xl:text-[14rem] font-bold tracking-tighter text-red-600 tabular-nums leading-none";
+  } else if (diff <= 300000) { // Last 5 minutes - ORANGE (dim)
+    countdownEl.className = "text-7xl sm:text-8xl md:text-9xl lg:text-[11rem] xl:text-[14rem] font-bold tracking-tighter text-orange-500 tabular-nums leading-none";
+  } else { // Normal - WHITE (soft)
+    countdownEl.className = "text-7xl sm:text-8xl md:text-9xl lg:text-[11rem] xl:text-[14rem] font-bold tracking-tighter text-white tabular-nums leading-none";
   }
 
   // AUDIO (FOREGROUND ONLY)
@@ -153,7 +160,7 @@ function updateClock() {
     alarm.play();
     alarmPlayed = true;
     document.getElementById("status").innerText = "SESSION STARTED";
-    document.getElementById("status").className = "text-xs md:text-sm text-red-500 tracking-wide uppercase font-bold pulse-soft";
+    document.getElementById("status").className = "text-xs sm:text-sm text-red-600 tracking-wide uppercase font-semibold pulse-soft";
   }
 }
 

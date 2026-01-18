@@ -17,9 +17,6 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#000000">
-
   <style>
     @keyframes breathe {
 
@@ -67,7 +64,9 @@
     body {
       width: 100%;
       height: 100%;
-      overflow-y: scroll;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      overflow: hidden;
       position: fixed;
       background: #000;
     }
@@ -121,6 +120,11 @@
         transform: translateY(3rem);
       }
     }
+
+    #mainContainer {
+      height: 100vh;
+      height: -webkit-fill-available;
+    }
   </style>
 </head>
 
@@ -170,18 +174,74 @@
   </div>
 
   <!-- AUDIO -->
-  <audio id="alarm" src="/alarm.mp3" preload="auto"></audio>
+  <audio id="alarm" preload="auto"></audio>
 
   <script>
     /* ======================
        CONFIG
        ====================== */
-    const BASE_PATH = "/jadwal-harian/"; // Use root for dev, change to "/jadwal-harian/" for production
+    const BASE_PATH = "/jadwal-harian/";
     const alarm = document.getElementById("alarm");
+
+    // Create a simple beep sound
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    function playBeep() {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.5);
+    }
+
     let audioUnlocked = false;
     let alarmPlayed = false;
-    let uiVisible = localStorage.getItem("uiVisible") !== "false"; // Persist UI state
+    let uiVisible = localStorage.getItem("uiVisible") !== "false";
     let lastTap = 0;
+
+    /* ======================
+       FULLSCREEN FUNCTIONS
+       ====================== */
+    function hideAddressBar() {
+      // Force scroll to hide address bar
+      setTimeout(() => {
+        window.scrollTo(0, 1);
+      }, 0);
+
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+      }, 10);
+    }
+
+    function enterFullscreen() {
+      const elem = document.documentElement;
+
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen();
+      } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+      } else if (elem.mozRequestFullScreen) {
+        elem.mozRequestFullScreen();
+      } else if (elem.msRequestFullscreen) {
+        elem.msRequestFullscreen();
+      }
+    }
+
+    // Hide address bar on load and orientation change
+    window.addEventListener('load', hideAddressBar);
+    window.addEventListener('orientationchange', hideAddressBar);
+    window.addEventListener('resize', hideAddressBar);
+
+    // Initial hide
+    hideAddressBar();
 
     /* ======================
        SCHEDULE
@@ -212,11 +272,11 @@
         if (t > now) return t;
       }
 
-      // No more sessions today, get first session tomorrow
       const tomorrow = new Date(now);
       tomorrow.setDate(tomorrow.getDate() + 1);
       const tomorrowStr = tomorrow.toISOString().split("T")[0];
-      const firstSession = schedule[0];
+      const tomorrowSchedule = schedules.weekday;
+      const firstSession = tomorrowSchedule[0];
       return new Date(`${tomorrowStr}T${firstSession}:00`);
     }
 
@@ -247,37 +307,29 @@
       countdownEl.innerText =
         `${String(h).padStart(2, "0")} : ${String(m).padStart(2, "0")} : ${String(s).padStart(2, "0")}`;
 
-      // Color states - bold and clear
-      if (diff <= 60000) { // Last minute
+      if (diff <= 60000) {
         countdownEl.style.color = "#ef4444";
-      } else if (diff <= 300000) { // Last 5 minutes
+      } else if (diff <= 300000) {
         countdownEl.style.color = "#fb923c";
-      } else { // Normal
+      } else {
         countdownEl.style.color = "#ffffff";
       }
 
-      // AUDIO & NOTIFICATION TRIGGER
       if (diff <= 1000 && diff >= -5000 && !alarmPlayed) {
         alarmPlayed = true;
 
-        // Play audio if unlocked
         if (audioUnlocked) {
-          alarm.play().catch(e => console.warn("Audio play failed:", e));
+          playBeep();
         }
 
-        // Visual feedback
         document.getElementById("status").innerText = "SESSION STARTED";
         document.getElementById("status").style.color = "#ef4444";
-
-        // Visual pulse animation
         countdownEl.classList.add("breathe");
 
-        // Haptic feedback
         if (navigator.vibrate) {
           navigator.vibrate([200, 100, 200, 100, 200]);
         }
       } else if (diff > 5000 && alarmPlayed) {
-        // Reset for next session
         alarmPlayed = false;
         countdownEl.classList.remove("breathe");
       }
@@ -290,14 +342,12 @@
        UI TOGGLE (Double Tap)
        ====================== */
     document.getElementById("mainContainer").addEventListener("click", function (e) {
-      // Ignore if clicking button
       if (e.target.id === "enable") return;
 
       const currentTime = new Date().getTime();
       const tapGap = currentTime - lastTap;
 
       if (tapGap < 300 && tapGap > 0) {
-        // Double tap detected
         toggleUI();
       }
 
@@ -306,7 +356,7 @@
 
     function toggleUI() {
       uiVisible = !uiVisible;
-      localStorage.setItem("uiVisible", uiVisible); // Persist preference
+      localStorage.setItem("uiVisible", uiVisible);
 
       const topInfo = document.getElementById("topInfo");
       const bottomUI = document.getElementById("bottomUI");
@@ -321,10 +371,6 @@
         sessionInfo.classList.remove("hidden-ui");
         sessionInfo.classList.add("visible-ui");
         countdown.classList.remove("countdown-fullscreen");
-        // Show address bar
-        document.documentElement.style.height = "auto";
-        document.body.style.height = "auto";
-        window.scrollTo(0, 0);
       } else {
         topInfo.classList.remove("visible-ui");
         topInfo.classList.add("hidden-ui");
@@ -333,11 +379,10 @@
         sessionInfo.classList.remove("visible-ui");
         sessionInfo.classList.add("hidden-ui");
         countdown.classList.add("countdown-fullscreen");
-        // Hide address bar - trigger scroll to activate fullscreen mode
-        document.documentElement.style.height = "100vh";
-        document.body.style.height = "100vh";
-        document.body.style.overflow = "hidden";
-        window.scrollTo(0, 1);
+
+        // Try to enter fullscreen mode
+        enterFullscreen();
+        hideAddressBar();
       }
     }
 
@@ -345,54 +390,39 @@
        ENABLE NOTIFICATION
        ====================== */
     document.getElementById("enable").onclick = async function (e) {
-      e.stopPropagation(); // Prevent double-tap detection
+      e.stopPropagation();
 
       const btn = this;
       btn.disabled = true;
       btn.style.opacity = "0.5";
 
       try {
-        // Unlock audio
-        alarm.play().then(() => {
-          alarm.pause();
-          alarm.currentTime = 0;
-          audioUnlocked = true;
-        }).catch(e => {
-          console.warn("Audio unlock failed:", e);
-        });
+        // Unlock audio context
+        if (audioContext.state === 'suspended') {
+          await audioContext.resume();
+        }
+        audioUnlocked = true;
 
         if ("serviceWorker" in navigator && "Notification" in window) {
           const perm = await Notification.requestPermission();
           if (perm === "granted") {
-            try {
-              const reg = await navigator.serviceWorker.register(
-                BASE_PATH + "sw.js",
-                { scope: BASE_PATH }
-              );
-              console.log("Service Worker registered successfully");
-              scheduleNotifications(reg);
-              document.getElementById("status").innerText = "READY TO FOCUS";
-              btn.style.display = "none";
-            } catch (swError) {
-              console.error("Service Worker registration failed:", swError);
-              console.error("SW URL:", BASE_PATH + "sw.js");
-              // App still works with visual alerts - don't fail
-              document.getElementById("status").innerText = "Ready (visual alerts active)";
-              document.getElementById("status").style.color = "#10b981";
-              btn.style.display = "none";
-            }
+            document.getElementById("status").innerText = "READY TO FOCUS";
+            btn.style.display = "none";
           } else {
-            console.warn("Notifications permission denied");
             document.getElementById("status").innerText = "Ready (visual alerts active)";
             document.getElementById("status").style.color = "#10b981";
             btn.style.display = "none";
           }
         } else {
-          console.warn("Service Workers or Notifications not available");
           document.getElementById("status").innerText = "Ready (visual alerts active)";
           document.getElementById("status").style.color = "#10b981";
           btn.style.display = "none";
         }
+
+        // Try to enter fullscreen
+        enterFullscreen();
+        hideAddressBar();
+
       } catch (error) {
         console.error("Enable error:", error);
         document.getElementById("status").innerText = "Error - try again";
@@ -402,42 +432,34 @@
       }
     };
 
-    function scheduleNotifications(reg) {
-      const now = new Date();
-      const today = now.toISOString().split("T")[0];
-      const schedule = getTodaySchedule();
-      let notificationCount = 0;
-
-      // Use navigator.serviceWorker.ready for active SW
-      navigator.serviceWorker.ready.then(activeReg => {
-        schedule.forEach(time => {
-          const date = new Date(`${today}T${time}:00`);
-          if (date > now) {
-            try {
-              activeReg.showNotification("UTBK Focus", {
-                body: `Waktunya belajar (${time})`,
-                tag: time,
-                requireInteraction: true,
-                vibrate: [200, 100, 200]
-              });
-              notificationCount++;
-            } catch (error) {
-              console.error("Failed to show notification for", time, error);
-            }
-          }
-        });
-        console.log(`Scheduled ${notificationCount} notifications for today`);
-      }).catch(error => {
-        console.error("Service Worker not ready:", error);
-      });
-    }
-
     /* ======================
        PREVENT BOUNCE/SCROLL
        ====================== */
     document.addEventListener("touchmove", function (e) {
       e.preventDefault();
     }, { passive: false });
+
+    // Prevent pull-to-refresh
+    document.body.addEventListener('touchstart', function (e) {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    let lastTouchY = 0;
+    document.body.addEventListener('touchmove', function (e) {
+      const touchY = e.touches[0].clientY;
+      const touchYDelta = touchY - lastTouchY;
+      lastTouchY = touchY;
+
+      if (e.cancelable && window.scrollY === 0 && touchYDelta > 0) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    document.body.addEventListener('touchend', function () {
+      lastTouchY = 0;
+    });
   </script>
 
 </body>

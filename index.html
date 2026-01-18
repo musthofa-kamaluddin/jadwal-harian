@@ -93,16 +93,16 @@
     <div class="text-center">
       <!-- Main Countdown -->
       <p id="countdown"
-        class="font-black tracking-tight text-white tabular-nums leading-none mb-6"
+        class="font-black tracking-tight text-white tabular-nums leading-none"
         style="font-size: min(18vw, 14vh);">
         00:00:00
       </p>
       
-      <!-- Next Session Info -->
-      <!-- <div id="sessionInfo" class="visible-ui transition-opacity duration-300">
-        <p class="text-sm sm:text-base text-slate-500 uppercase tracking-wider mb-2 font-semibold">Next Session</p>
-        <p id="nextSession" class="text-3xl sm:text-4xl md:text-5xl font-bold text-blue-400"></p>
-      </div> -->
+      <!-- Next Session Info (compact) -->
+      <div id="sessionInfo" class="visible-ui transition-opacity duration-300 mt-8">
+        <p class="text-xs text-slate-600 uppercase tracking-wide mb-1">Next</p>
+        <p id="nextSession" class="text-xl font-bold text-slate-400"></p>
+      </div>
     </div>
   </div>
 
@@ -194,16 +194,13 @@ function updateClock() {
   countdownEl.innerText =
     `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
 
-  // Color states - softer, eye-friendly
+  // Color states - bold and clear
   if (diff <= 60000) { // Last minute
-    countdownEl.style.color = "#dc2626";
-    countdownEl.style.textShadow = "0 0 40px rgba(220, 38, 38, 0.2)";
+    countdownEl.style.color = "#ef4444";
   } else if (diff <= 300000) { // Last 5 minutes
-    countdownEl.style.color = "#f97316";
-    countdownEl.style.textShadow = "0 0 40px rgba(249, 115, 22, 0.15)";
+    countdownEl.style.color = "#fb923c";
   } else { // Normal
-    countdownEl.style.color = "#eff6ff";
-    countdownEl.style.textShadow = "0 0 40px rgba(147, 197, 253, 0.15)";
+    countdownEl.style.color = "#ffffff";
   }
 
   // AUDIO
@@ -211,7 +208,7 @@ function updateClock() {
     alarm.play();
     alarmPlayed = true;
     document.getElementById("status").innerText = "SESSION STARTED";
-    document.getElementById("status").style.color = "#dc2626";
+    document.getElementById("status").style.color = "#ef4444";
   }
 }
 

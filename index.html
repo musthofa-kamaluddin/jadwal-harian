@@ -321,8 +321,10 @@
         sessionInfo.classList.remove("hidden-ui");
         sessionInfo.classList.add("visible-ui");
         countdown.classList.remove("countdown-fullscreen");
-        // Show address bar by scrolling to top
-        setTimeout(() => window.scrollTo(0, 0), 10);
+        // Show address bar
+        document.documentElement.style.height = "auto";
+        document.body.style.height = "auto";
+        window.scrollTo(0, 0);
       } else {
         topInfo.classList.remove("visible-ui");
         topInfo.classList.add("hidden-ui");
@@ -331,8 +333,11 @@
         sessionInfo.classList.remove("visible-ui");
         sessionInfo.classList.add("hidden-ui");
         countdown.classList.add("countdown-fullscreen");
-        // Hide address bar by scrolling down
-        setTimeout(() => window.scrollBy(0, 100), 10);
+        // Hide address bar - trigger scroll to activate fullscreen mode
+        document.documentElement.style.height = "100vh";
+        document.body.style.height = "100vh";
+        document.body.style.overflow = "hidden";
+        window.scrollTo(0, 1);
       }
     }
 

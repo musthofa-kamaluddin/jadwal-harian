@@ -3,38 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>UTBK Focus</title>
+  <title>UTBK Focus Clock</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
 
   <link rel="manifest" href="/jadwal-harian/manifest.json">
   <meta name="theme-color" content="#020617">
+
+  <style>
+    @keyframes pulseSoft {
+      0%, 100% { opacity: 1 }
+      50% { opacity: .6 }
+    }
+    .pulse-soft {
+      animation: pulseSoft 2s infinite;
+    }
+  </style>
 </head>
 
-<body class="bg-slate-950 text-white">
+<body class="bg-slate-950 text-white overflow-hidden">
 
-<!-- FIXED WIDGET -->
-<div class="fixed bottom-3 right-3 w-[92%] max-w-sm bg-slate-900 border border-slate-700 rounded-xl p-4">
-  <h1 class="text-sm font-semibold mb-1">UTBK Focus</h1>
+<!-- FULLSCREEN CENTER -->
+<div class="w-screen h-screen flex items-center justify-center">
 
-  <p id="now" class="text-xs text-slate-400 mb-2"></p>
+  <div class="w-full max-w-3xl px-6 text-center">
 
-  <div class="mb-2">
-    <p class="text-xs text-slate-400">Sesi Berikutnya</p>
-    <p id="nextSession" class="text-sm font-medium"></p>
+    <!-- TITLE -->
+    <h1 class="text-sm tracking-widest text-slate-400 mb-4 uppercase">
+      UTBK Focus Mode
+    </h1>
+
+    <!-- CLOCK -->
+    <div class="mb-6">
+      <p id="now" class="text-lg md:text-xl text-slate-300"></p>
+    </div>
+
+    <!-- COUNTDOWN -->
+    <div class="bg-slate-900/80 border border-slate-700 rounded-3xl py-10 px-6 shadow-xl mb-6">
+
+      <p class="text-sm text-slate-400 mb-2">Sesi berikutnya</p>
+      <p id="nextSession" class="text-xl md:text-2xl font-medium mb-4"></p>
+
+      <p id="countdown"
+        class="text-6xl md:text-7xl font-bold tracking-widest text-indigo-400 pulse-soft">
+        --:--:--
+      </p>
+
+    </div>
+
+    <!-- STATUS -->
+    <p id="status" class="text-sm text-green-400 mb-6">
+      Fokus. Ikuti waktu.
+    </p>
+
+    <!-- ACTION -->
+    <button id="enable"
+      class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition rounded-xl text-sm font-semibold">
+      Aktifkan Notifikasi & Audio
+    </button>
+
   </div>
-
-  <div class="bg-slate-800 rounded-lg p-3 text-center mb-3">
-    <p class="text-xs text-slate-400">Mulai dalam</p>
-    <p id="countdown" class="text-2xl font-bold">--:--:--</p>
-  </div>
-
-  <button id="enable"
-    class="w-full py-2 bg-indigo-600 rounded text-sm font-medium mb-2">
-    Aktifkan Notifikasi & Audio
-  </button>
-
-  <p id="status" class="text-xs text-green-400"></p>
 </div>
 
 <!-- AUDIO -->
@@ -42,7 +70,7 @@
 
 <script>
 /* ======================
-   KONFIG
+   CONFIG
    ====================== */
 const BASE_PATH = "/jadwal-harian/";
 const alarm = document.getElementById("alarm");
@@ -50,7 +78,7 @@ let audioUnlocked = false;
 let alarmPlayed = false;
 
 /* ======================
-   JADWAL
+   SCHEDULE
    ====================== */
 const schedules = {
   weekday: ["04:45","16:30","19:00","21:00"],
@@ -66,7 +94,7 @@ function getTodaySchedule() {
 }
 
 /* ======================
-   COUNTDOWN
+   COUNTDOWN LOGIC
    ====================== */
 function getNextSession() {
   const now = new Date();
@@ -78,10 +106,10 @@ function getNextSession() {
   return null;
 }
 
-function updateCountdown() {
+function updateClock() {
   const now = new Date();
   document.getElementById("now").innerText =
-    "Sekarang: " + now.toLocaleTimeString("id-ID");
+    now.toLocaleTimeString("id-ID");
 
   const next = getNextSession();
 
@@ -104,25 +132,25 @@ function updateCountdown() {
   document.getElementById("countdown").innerText =
     `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
 
-  // 🔊 PLAY AUDIO TEPAT WAKTU (FOREGROUND)
+  // AUDIO (FOREGROUND ONLY)
   if (diff <= 1000 && audioUnlocked && !alarmPlayed) {
     alarm.play();
     alarmPlayed = true;
     document.getElementById("status").innerText =
       "SESI DIMULAI. KERJA.";
     document.getElementById("status").className =
-      "text-xs text-red-400";
+      "text-sm text-red-400";
   }
 }
 
-setInterval(updateCountdown, 1000);
-updateCountdown();
+setInterval(updateClock, 1000);
+updateClock();
 
 /* ======================
-   NOTIFICATION + AUDIO UNLOCK
+   ENABLE NOTIFICATION
    ====================== */
 document.getElementById("enable").onclick = async () => {
-  // unlock audio (WAJIB user interaction)
+  // unlock audio
   alarm.play().then(() => {
     alarm.pause();
     alarm.currentTime = 0;

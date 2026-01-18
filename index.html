@@ -6,8 +6,9 @@
   <title>UTBK Focus</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="manifest" href="manifest.json">
 
+  <!-- PWA -->
+  <link rel="manifest" href="/jadwal-harian/manifest.json">
   <meta name="theme-color" content="#020617">
 </head>
 
@@ -27,9 +28,13 @@
 
 <script>
 /* ======================
+   KONFIG GITHUB PAGES
+   ====================== */
+const BASE_PATH = "/jadwal-harian/";
+
+/* ======================
    JADWAL
    ====================== */
-
 const schedules = {
   weekday: ["04:45","16:30","19:00","21:00"],
   saturday: ["19:00","20:45"],
@@ -46,33 +51,41 @@ function getTodaySchedule() {
 /* ======================
    NOTIFICATION SETUP
    ====================== */
-
 document.getElementById("enable").onclick = async () => {
-  if (!("serviceWorker" in navigator)) return;
+  if (!("serviceWorker" in navigator)) {
+    alert("Service Worker tidak didukung browser");
+    return;
+  }
 
   const perm = await Notification.requestPermission();
-  if (perm !== "granted") return;
+  if (perm !== "granted") {
+    alert("Izin notifikasi ditolak");
+    return;
+  }
 
-  const reg = await navigator.serviceWorker.register("sw.js");
+  const reg = await navigator.serviceWorker.register(
+    BASE_PATH + "sw.js",
+    { scope: BASE_PATH }
+  );
 
   scheduleNotifications(reg);
 
   document.getElementById("status").innerText =
-    "Notifikasi aktif. Jangan hapus PWA.";
+    "Notifikasi aktif. Jangan force close PWA.";
 };
 
 function scheduleNotifications(reg) {
-  const today = new Date().toISOString().split("T")[0];
-  localStorage.setItem("utbk-day", today);
+  const now = new Date();
+  const today = now.toISOString().split("T")[0];
 
   getTodaySchedule().forEach(time => {
     const date = new Date(`${today}T${time}:00`);
-    if (date > new Date()) {
+    if (date > now) {
       reg.showNotification("UTBK Focus", {
         body: `Waktunya belajar (${time})`,
         tag: time,
         requireInteraction: true,
-        vibrate: [200,100,200]
+        vibrate: [200, 100, 200]
       });
     }
   });

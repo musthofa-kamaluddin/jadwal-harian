@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UTBK Focus</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="manifest" href="manifest.json">
+
+  <meta name="theme-color" content="#020617">
+</head>
+
+<body class="bg-slate-950 text-white">
+
+<div class="fixed bottom-3 right-3 w-[92%] max-w-sm bg-slate-900 border border-slate-700 rounded-xl p-4">
+  <h1 class="text-sm font-semibold">UTBK Focus</h1>
+  <p class="text-xs text-slate-400 mb-2">Notifikasi jalan di background</p>
+
+  <button id="enable"
+    class="w-full mt-2 py-2 bg-indigo-600 rounded text-sm font-medium">
+    Aktifkan Notifikasi
+  </button>
+
+  <p id="status" class="text-xs mt-2 text-green-400"></p>
+</div>
+
+<script>
+/* ======================
+   JADWAL
+   ====================== */
+
+const schedules = {
+  weekday: ["04:45","16:30","19:00","21:00"],
+  saturday: ["19:00","20:45"],
+  sunday: ["05:00","07:00","09:15","13:00","15:00","19:00"]
+};
+
+function getTodaySchedule() {
+  const d = new Date().getDay();
+  if (d === 6) return schedules.saturday;
+  if (d === 0) return schedules.sunday;
+  return schedules.weekday;
+}
+
+/* ======================
+   NOTIFICATION SETUP
+   ====================== */
+
+document.getElementById("enable").onclick = async () => {
+  if (!("serviceWorker" in navigator)) return;
+
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") return;
+
+  const reg = await navigator.serviceWorker.register("sw.js");
+
+  scheduleNotifications(reg);
+
+  document.getElementById("status").innerText =
+    "Notifikasi aktif. Jangan hapus PWA.";
+};
+
+function scheduleNotifications(reg) {
+  const today = new Date().toISOString().split("T")[0];
+  localStorage.setItem("utbk-day", today);
+
+  getTodaySchedule().forEach(time => {
+    const date = new Date(`${today}T${time}:00`);
+    if (date > new Date()) {
+      reg.showNotification("UTBK Focus", {
+        body: `Waktunya belajar (${time})`,
+        tag: time,
+        requireInteraction: true,
+        vibrate: [200,100,200]
+      });
+    }
+  });
+}
+</script>
+
+</body>
+</html>

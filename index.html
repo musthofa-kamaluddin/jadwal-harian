@@ -25,17 +25,29 @@
       -webkit-tap-highlight-color: transparent;
     }
     body {
-      touch-action: none;
       -webkit-user-select: none;
       user-select: none;
-      position: fixed;
+      position: relative;
       width: 100%;
-      height: 100%;
-      overflow: hidden;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      overflow-x: hidden;
+      overflow-y: auto;
     }
     html {
-      overflow: hidden;
-      height: 100%;
+      height: -webkit-fill-available;
+    }
+    /* Safe area untuk bottom bar */
+    .safe-bottom {
+      padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+    }
+    /* Hide scrollbar tapi tetap bisa scroll */
+    body::-webkit-scrollbar {
+      display: none;
+    }
+    body {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
     }
   </style>
 </head>
@@ -43,15 +55,15 @@
 <body class="bg-black text-white overflow-hidden">
 
 <!-- FULLSCREEN LANDSCAPE CLOCK -->
-<div class="w-screen h-screen flex flex-col items-center justify-center px-4 py-6 sm:p-8">
+<div class="min-h-screen flex flex-col items-center justify-center px-4 py-8 sm:p-8">
 
   <!-- CURRENT TIME (small, top) -->
-  <div class="mb-3 sm:mb-4">
+  <div class="mb-3 sm:mb-4 mt-8">
     <p id="now" class="text-xl sm:text-2xl md:text-3xl font-light tracking-wide text-slate-600"></p>
   </div>
 
   <!-- COUNTDOWN (HUGE CENTER) -->
-  <div class="flex-1 flex flex-col items-center justify-center w-full">
+  <div class="flex-1 flex flex-col items-center justify-center w-full my-6">
     <p id="countdown"
       class="text-7xl sm:text-8xl md:text-9xl lg:text-[11rem] xl:text-[14rem] font-bold tracking-tighter text-white tabular-nums leading-none">
       00:00:00
@@ -64,8 +76,8 @@
     </div>
   </div>
 
-  <!-- BOTTOM STATUS & BUTTON -->
-  <div class="w-full max-w-md text-center space-y-3 pb-safe">
+  <!-- BOTTOM STATUS & BUTTON (with safe area) -->
+  <div class="w-full max-w-md text-center space-y-3 safe-bottom mb-4">
     <p id="status" class="text-xs sm:text-sm text-slate-600 tracking-wide uppercase">
       Ready to focus
     </p>

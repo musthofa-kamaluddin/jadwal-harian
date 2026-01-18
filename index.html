@@ -17,6 +17,9 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#020617">
+
   <style>
     @keyframes breathe {
 
@@ -206,12 +209,12 @@
     let alarmPlayed = false;
     let uiVisible = localStorage.getItem("uiVisible") !== "false";
     let lastTap = 0;
+    let serviceWorkerReg = null;
 
     /* ======================
        FULLSCREEN FUNCTIONS
        ====================== */
     function hideAddressBar() {
-      // Force scroll to hide address bar
       setTimeout(() => {
         window.scrollTo(0, 1);
       }, 0);
@@ -235,12 +238,9 @@
       }
     }
 
-    // Hide address bar on load and orientation change
     window.addEventListener('load', hideAddressBar);
     window.addEventListener('orientationchange', hideAddressBar);
     window.addEventListener('resize', hideAddressBar);
-
-    // Initial hide
     hideAddressBar();
 
     /* ======================
@@ -254,6 +254,15 @@
 
     function getTodaySchedule() {
       const d = new Date().getDay();
+      if (d === 6) return schedules.saturday;
+      if (d === 0) return schedules.sunday;
+      return schedules.weekday;
+    }
+
+    function getTomorrowSchedule() {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const d = tomorrow.getDay();
       if (d === 6) return schedules.saturday;
       if (d === 0) return schedules.sunday;
       return schedules.weekday;
@@ -275,7 +284,7 @@
       const tomorrow = new Date(now);
       tomorrow.setDate(tomorrow.getDate() + 1);
       const tomorrowStr = tomorrow.toISOString().split("T")[0];
-      const tomorrowSchedule = schedules.weekday;
+      const tomorrowSchedule = getTomorrowSchedule();
       const firstSession = tomorrowSchedule[0];
       return new Date(`${tomorrowStr}T${firstSession}:00`);
     }
@@ -329,6 +338,21 @@
         if (navigator.vibrate) {
           navigator.vibrate([200, 100, 200, 100, 200]);
         }
+
+        // Show notification
+        if (serviceWorkerReg && Notification.permission === "granted") {
+          const time = next.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+          serviceWorkerReg.showNotification("🎯 UTBK Focus Time!", {
+            body: `Waktunya belajar sekarang! (${time})`,
+            icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23020617' width='192' height='192'/><text x='96' y='120' font-size='100' font-weight='900' fill='%23fff' text-anchor='middle' font-family='system-ui'>T</text></svg>",
+            badge: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%23ef4444' width='96' height='96' rx='24'/><text x='48' y='65' font-size='50' font-weight='900' fill='%23fff' text-anchor='middle' font-family='system-ui'>T</text></svg>",
+            tag: 'session-start-' + time,
+            requireInteraction: true,
+            vibrate: [200, 100, 200, 100, 200],
+            timestamp: Date.now(),
+            data: { url: window.location.href }
+          });
+        }
       } else if (diff > 5000 && alarmPlayed) {
         alarmPlayed = false;
         countdownEl.classList.remove("breathe");
@@ -380,10 +404,47 @@
         sessionInfo.classList.add("hidden-ui");
         countdown.classList.add("countdown-fullscreen");
 
-        // Try to enter fullscreen mode
         enterFullscreen();
         hideAddressBar();
       }
+    }
+
+    /* ======================
+       NOTIFICATION SCHEDULING
+       ====================== */
+    function scheduleUpcomingNotifications(reg) {
+      const now = new Date();
+      const today = now.toISOString().split("T")[0];
+      const schedule = getTodaySchedule();
+      let scheduled = 0;
+
+      // Schedule notifications for upcoming sessions today
+      schedule.forEach(time => {
+        const sessionTime = new Date(`${today}T${time}:00`);
+        const timeDiff = sessionTime - now;
+
+        // Only schedule if session is in the future and within next 12 hours
+        if (timeDiff > 60000 && timeDiff < 12 * 60 * 60 * 1000) {
+          setTimeout(() => {
+            if (Notification.permission === "granted" && reg) {
+              reg.showNotification("⏰ UTBK Focus Reminder", {
+                body: `Sesi belajar akan dimulai dalam 1 menit! (${time})`,
+                icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23020617' width='192' height='192'/><text x='96' y='120' font-size='100' font-weight='900' fill='%23fff' text-anchor='middle' font-family='system-ui'>T</text></svg>",
+                badge: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%23fb923c' width='96' height='96' rx='24'/><text x='48' y='65' font-size='50' font-weight='900' fill='%23fff' text-anchor='middle' font-family='system-ui'>T</text></svg>",
+                tag: 'reminder-' + time,
+                requireInteraction: false,
+                vibrate: [100, 50, 100],
+                timestamp: Date.now(),
+                data: { url: window.location.href }
+              });
+            }
+          }, timeDiff - 60000); // 1 minute before session
+          scheduled++;
+        }
+      });
+
+      console.log(`Scheduled ${scheduled} notification reminders`);
+      return scheduled;
     }
 
     /* ======================
@@ -393,8 +454,12 @@
       e.stopPropagation();
 
       const btn = this;
+      const statusEl = document.getElementById("status");
+
       btn.disabled = true;
       btn.style.opacity = "0.5";
+      statusEl.innerText = "Setting up...";
+      statusEl.style.color = "#fb923c";
 
       try {
         // Unlock audio context
@@ -402,35 +467,99 @@
           await audioContext.resume();
         }
         audioUnlocked = true;
+        console.log("Audio unlocked");
 
-        if ("serviceWorker" in navigator && "Notification" in window) {
-          const perm = await Notification.requestPermission();
-          if (perm === "granted") {
-            document.getElementById("status").innerText = "READY TO FOCUS";
-            btn.style.display = "none";
-          } else {
-            document.getElementById("status").innerText = "Ready (visual alerts active)";
-            document.getElementById("status").style.color = "#10b981";
-            btn.style.display = "none";
-          }
-        } else {
-          document.getElementById("status").innerText = "Ready (visual alerts active)";
-          document.getElementById("status").style.color = "#10b981";
-          btn.style.display = "none";
+        // Check for service worker and notification support
+        if (!("serviceWorker" in navigator)) {
+          throw new Error("Service Workers not supported");
         }
 
-        // Try to enter fullscreen
-        enterFullscreen();
-        hideAddressBar();
+        if (!("Notification" in window)) {
+          throw new Error("Notifications not supported");
+        }
+
+        // Request notification permission
+        const perm = await Notification.requestPermission();
+        console.log("Notification permission:", perm);
+
+        if (perm !== "granted") {
+          statusEl.innerText = "Ready (visual only)";
+          statusEl.style.color = "#10b981";
+          btn.style.display = "none";
+          return;
+        }
+
+        // Register service worker
+        try {
+          serviceWorkerReg = await navigator.serviceWorker.register(
+            BASE_PATH + "sw.js",
+            { scope: BASE_PATH }
+          );
+
+          console.log("Service Worker registered:", serviceWorkerReg);
+
+          // Wait for service worker to be ready
+          await navigator.serviceWorker.ready;
+          console.log("Service Worker ready");
+
+          // Test notification
+          await serviceWorkerReg.showNotification("✅ UTBK Focus Active!", {
+            body: "Notifikasi berhasil diaktifkan. Kamu akan diingatkan saat waktu belajar tiba.",
+            icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23020617' width='192' height='192'/><text x='96' y='120' font-size='100' font-weight='900' fill='%23fff' text-anchor='middle' font-family='system-ui'>T</text></svg>",
+            tag: 'test-notification',
+            requireInteraction: false,
+            vibrate: [100, 50, 100]
+          });
+
+          // Schedule upcoming notifications
+          const count = scheduleUpcomingNotifications(serviceWorkerReg);
+
+          statusEl.innerText = `READY (${count} reminders scheduled)`;
+          statusEl.style.color = "#10b981";
+          btn.style.display = "none";
+
+          // Try fullscreen
+          enterFullscreen();
+          hideAddressBar();
+
+        } catch (swError) {
+          console.error("Service Worker error:", swError);
+          console.error("Attempted to register:", BASE_PATH + "sw.js");
+          throw swError;
+        }
 
       } catch (error) {
-        console.error("Enable error:", error);
-        document.getElementById("status").innerText = "Error - try again";
-        document.getElementById("status").style.color = "#ef4444";
+        console.error("Setup error:", error);
+        statusEl.innerText = "Error: " + error.message;
+        statusEl.style.color = "#ef4444";
         btn.disabled = false;
         btn.style.opacity = "1";
+
+        // Show more details
+        setTimeout(() => {
+          statusEl.innerText = "Tap again to retry";
+        }, 3000);
       }
     };
+
+    /* ======================
+       SERVICE WORKER UPDATE CHECK
+       ====================== */
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.getRegistration(BASE_PATH).then(reg => {
+        if (reg) {
+          serviceWorkerReg = reg;
+          console.log("Found existing Service Worker");
+
+          // Check if notifications are already granted
+          if (Notification.permission === "granted") {
+            document.getElementById("status").innerText = "READY TO FOCUS";
+            document.getElementById("enable").style.display = "none";
+            scheduleUpcomingNotifications(reg);
+          }
+        }
+      });
+    }
 
     /* ======================
        PREVENT BOUNCE/SCROLL
@@ -439,7 +568,6 @@
       e.preventDefault();
     }, { passive: false });
 
-    // Prevent pull-to-refresh
     document.body.addEventListener('touchstart', function (e) {
       if (e.touches.length > 1) {
         e.preventDefault();

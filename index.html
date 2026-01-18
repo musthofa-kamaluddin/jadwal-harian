@@ -321,6 +321,8 @@
         sessionInfo.classList.remove("hidden-ui");
         sessionInfo.classList.add("visible-ui");
         countdown.classList.remove("countdown-fullscreen");
+        // Scroll up to show browser address bar
+        window.scrollTo(0, 0);
       } else {
         topInfo.classList.remove("visible-ui");
         topInfo.classList.add("hidden-ui");
@@ -329,23 +331,8 @@
         sessionInfo.classList.remove("visible-ui");
         sessionInfo.classList.add("hidden-ui");
         countdown.classList.add("countdown-fullscreen");
-      }
-    }
-
-    /* ======================
-       ENABLE NOTIFICATION
-       ====================== */
-    document.getElementById("enable").onclick = async function (e) {
-      e.stopPropagation(); // Prevent double-tap detection
-
-      const btn = this;
-      btn.disabled = true;
-      btn.style.opacity = "0.5";
-
-      try {
-        // Unlock audio
-        alarm.play().then(() => {
-          alarm.pause();
+        // Scroll down to hide browser address bar on mobile
+        window.scrollTo(0, 1);
           alarm.currentTime = 0;
           audioUnlocked = true;
         }).catch(e => {

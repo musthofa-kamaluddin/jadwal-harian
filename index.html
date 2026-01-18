@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,78 +14,107 @@
   <meta name="theme-color" content="#000000">
 
   <style>
-    @keyframes pulseSoft {
-      0%, 100% { opacity: 0.95 }
-      50% { opacity: 0.85 }
+    @keyframes breathe {
+      0%, 100% { opacity: 1 }
+      50% { opacity: 0.7 }
     }
-    .pulse-soft {
-      animation: pulseSoft 3s ease-in-out infinite;
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
+    @keyframes slideDown {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(100%); opacity: 0; }
+    }
+    
     * {
       -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
     }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: fixed;
+      background: #000;
+    }
+    
     body {
       -webkit-user-select: none;
       user-select: none;
-      position: relative;
-      width: 100%;
-      min-height: 100vh;
-      min-height: -webkit-fill-available;
-      overflow-x: hidden;
-      overflow-y: auto;
+      touch-action: manipulation;
     }
-    html {
-      height: -webkit-fill-available;
+    
+    .breathe {
+      animation: breathe 4s ease-in-out infinite;
     }
-    /* Safe area untuk bottom bar */
-    .safe-bottom {
-      padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+    
+    .slide-up {
+      animation: slideUp 0.3s ease-out forwards;
     }
-    /* Hide scrollbar tapi tetap bisa scroll */
-    body::-webkit-scrollbar {
-      display: none;
+    
+    .slide-down {
+      animation: slideDown 0.3s ease-out forwards;
     }
-    body {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
+    
+    .hidden-ui {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    
+    .visible-ui {
+      opacity: 1;
+      pointer-events: auto;
+      transition: opacity 0.3s ease;
     }
   </style>
 </head>
 
-<body class="bg-black text-white overflow-hidden">
+<body class="bg-gradient-to-b from-black via-slate-950 to-black">
 
-<!-- FULLSCREEN LANDSCAPE CLOCK -->
-<div class="min-h-screen flex flex-col items-center justify-center px-4 py-8 sm:p-8">
+<!-- MAIN CONTAINER -->
+<div id="mainContainer" class="w-full h-full flex flex-col items-center justify-center relative">
 
-  <!-- CURRENT TIME (small, top) -->
-  <div class="mb-3 sm:mb-4 mt-8">
-    <p id="now" class="text-xl sm:text-2xl md:text-3xl font-light tracking-wide text-slate-600"></p>
+  <!-- TOP INFO (dismissible) -->
+  <div id="topInfo" class="absolute top-0 left-0 right-0 pt-8 pb-4 text-center visible-ui">
+    <p id="now" class="text-xl sm:text-2xl font-light tracking-wider text-slate-700"></p>
   </div>
 
-  <!-- COUNTDOWN (HUGE CENTER) -->
-  <div class="flex-1 flex flex-col items-center justify-center w-full my-6">
-    <p id="countdown"
-      class="text-7xl sm:text-8xl md:text-9xl lg:text-[11rem] xl:text-[14rem] font-bold tracking-tighter text-white tabular-nums leading-none">
-      00:00:00
-    </p>
-    
-    <!-- Next session info -->
-    <div class="mt-4 sm:mt-6 md:mt-8 text-center">
-      <p class="text-xs sm:text-sm text-slate-700 uppercase tracking-widest mb-1">Next Session</p>
-      <p id="nextSession" class="text-xl sm:text-2xl md:text-3xl font-medium text-indigo-500"></p>
+  <!-- CENTER: COUNTDOWN -->
+  <div class="flex-1 flex items-center justify-center w-full px-4">
+    <div class="text-center">
+      <!-- Main Countdown -->
+      <p id="countdown"
+        class="font-bold tracking-tight text-blue-50 tabular-nums leading-none mb-6"
+        style="font-size: min(18vw, 14vh); text-shadow: 0 0 40px rgba(147, 197, 253, 0.15);">
+        00:00:00
+      </p>
+      
+      <!-- Next Session Info -->
+      <div id="sessionInfo" class="visible-ui transition-opacity duration-300">
+        <p class="text-xs sm:text-sm text-slate-700 uppercase tracking-[0.3em] mb-2 font-medium">Next Session</p>
+        <p id="nextSession" class="text-2xl sm:text-3xl md:text-4xl font-semibold text-blue-400/80"></p>
+      </div>
     </div>
   </div>
 
-  <!-- BOTTOM STATUS & BUTTON (with safe area) -->
-  <div class="w-full max-w-md text-center space-y-3 safe-bottom mb-4">
-    <p id="status" class="text-xs sm:text-sm text-slate-600 tracking-wide uppercase">
-      Ready to focus
-    </p>
+  <!-- BOTTOM: STATUS & BUTTON (floating, dismissible) -->
+  <div id="bottomUI" class="absolute bottom-0 left-0 right-0 pb-12 px-6 text-center visible-ui">
+    <div class="max-w-sm mx-auto space-y-4">
+      <p id="status" class="text-sm text-slate-600 tracking-widest uppercase font-light">
+        Tap to begin
+      </p>
 
-    <button id="enable"
-      class="px-6 py-2.5 sm:px-8 sm:py-3 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/10 rounded-full text-xs sm:text-sm font-medium tracking-wider uppercase transition-all duration-200">
-      Enable Notifications
-    </button>
+      <button id="enable"
+        class="w-full max-w-xs px-8 py-4 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/20 rounded-2xl text-sm font-medium tracking-widest uppercase transition-all duration-200 shadow-lg shadow-black/50">
+        Enable Notifications
+      </button>
+      
+      <p class="text-xs text-slate-800 mt-4">Double tap to hide UI</p>
+    </div>
   </div>
 
 </div>
@@ -101,6 +130,8 @@ const BASE_PATH = "/jadwal-harian/";
 const alarm = document.getElementById("alarm");
 let audioUnlocked = false;
 let alarmPlayed = false;
+let uiVisible = true;
+let lastTap = 0;
 
 /* ======================
    SCHEDULE
@@ -140,9 +171,10 @@ function updateClock() {
   const countdownEl = document.getElementById("countdown");
 
   if (!next) {
-    document.getElementById("nextSession").innerText = "No more sessions today";
+    document.getElementById("nextSession").innerText = "No more today";
     countdownEl.innerText = "00:00:00";
-    countdownEl.className = "text-7xl sm:text-8xl md:text-9xl lg:text-[11rem] xl:text-[14rem] font-bold tracking-tighter text-slate-800 tabular-nums leading-none";
+    countdownEl.style.color = "#1e293b";
+    countdownEl.style.textShadow = "none";
     return;
   }
 
@@ -158,21 +190,24 @@ function updateClock() {
   countdownEl.innerText =
     `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
 
-  // Visual states based on time remaining
-  if (diff <= 60000) { // Last minute - RED (dim)
-    countdownEl.className = "text-7xl sm:text-8xl md:text-9xl lg:text-[11rem] xl:text-[14rem] font-bold tracking-tighter text-red-600 tabular-nums leading-none";
-  } else if (diff <= 300000) { // Last 5 minutes - ORANGE (dim)
-    countdownEl.className = "text-7xl sm:text-8xl md:text-9xl lg:text-[11rem] xl:text-[14rem] font-bold tracking-tighter text-orange-500 tabular-nums leading-none";
-  } else { // Normal - WHITE (soft)
-    countdownEl.className = "text-7xl sm:text-8xl md:text-9xl lg:text-[11rem] xl:text-[14rem] font-bold tracking-tighter text-white tabular-nums leading-none";
+  // Color states - softer, eye-friendly
+  if (diff <= 60000) { // Last minute
+    countdownEl.style.color = "#dc2626";
+    countdownEl.style.textShadow = "0 0 40px rgba(220, 38, 38, 0.2)";
+  } else if (diff <= 300000) { // Last 5 minutes
+    countdownEl.style.color = "#f97316";
+    countdownEl.style.textShadow = "0 0 40px rgba(249, 115, 22, 0.15)";
+  } else { // Normal
+    countdownEl.style.color = "#eff6ff";
+    countdownEl.style.textShadow = "0 0 40px rgba(147, 197, 253, 0.15)";
   }
 
-  // AUDIO (FOREGROUND ONLY)
+  // AUDIO
   if (diff <= 1000 && audioUnlocked && !alarmPlayed) {
     alarm.play();
     alarmPlayed = true;
     document.getElementById("status").innerText = "SESSION STARTED";
-    document.getElementById("status").className = "text-xs sm:text-sm text-red-600 tracking-wide uppercase font-semibold pulse-soft";
+    document.getElementById("status").style.color = "#dc2626";
   }
 }
 
@@ -180,10 +215,53 @@ setInterval(updateClock, 1000);
 updateClock();
 
 /* ======================
+   UI TOGGLE (Double Tap)
+   ====================== */
+document.getElementById("mainContainer").addEventListener("click", function(e) {
+  // Ignore if clicking button
+  if (e.target.id === "enable") return;
+  
+  const currentTime = new Date().getTime();
+  const tapGap = currentTime - lastTap;
+  
+  if (tapGap < 300 && tapGap > 0) {
+    // Double tap detected
+    toggleUI();
+  }
+  
+  lastTap = currentTime;
+});
+
+function toggleUI() {
+  uiVisible = !uiVisible;
+  const topInfo = document.getElementById("topInfo");
+  const bottomUI = document.getElementById("bottomUI");
+  const sessionInfo = document.getElementById("sessionInfo");
+  
+  if (uiVisible) {
+    topInfo.classList.remove("hidden-ui");
+    topInfo.classList.add("visible-ui");
+    bottomUI.classList.remove("hidden-ui");
+    bottomUI.classList.add("visible-ui");
+    sessionInfo.classList.remove("hidden-ui");
+    sessionInfo.classList.add("visible-ui");
+  } else {
+    topInfo.classList.remove("visible-ui");
+    topInfo.classList.add("hidden-ui");
+    bottomUI.classList.remove("visible-ui");
+    bottomUI.classList.add("hidden-ui");
+    sessionInfo.classList.remove("visible-ui");
+    sessionInfo.classList.add("hidden-ui");
+  }
+}
+
+/* ======================
    ENABLE NOTIFICATION
    ====================== */
-document.getElementById("enable").onclick = async () => {
-  // unlock audio
+document.getElementById("enable").onclick = async function(e) {
+  e.stopPropagation(); // Prevent double-tap detection
+  
+  // Unlock audio
   alarm.play().then(() => {
     alarm.pause();
     alarm.currentTime = 0;
@@ -201,8 +279,8 @@ document.getElementById("enable").onclick = async () => {
     }
   }
 
-  document.getElementById("status").innerText = "NOTIFICATIONS ACTIVE";
-  document.getElementById("enable").style.display = "none";
+  document.getElementById("status").innerText = "READY TO FOCUS";
+  this.style.display = "none";
 };
 
 function scheduleNotifications(reg) {
@@ -221,6 +299,13 @@ function scheduleNotifications(reg) {
     }
   });
 }
+
+/* ======================
+   PREVENT BOUNCE/SCROLL
+   ====================== */
+document.addEventListener("touchmove", function(e) {
+  e.preventDefault();
+}, { passive: false });
 </script>
 
 </body>

@@ -333,6 +333,23 @@
         countdown.classList.add("countdown-fullscreen");
         // Scroll down to hide browser address bar on mobile
         window.scrollTo(0, 1);
+      }
+    }
+
+    /* ======================
+       ENABLE NOTIFICATION
+       ====================== */
+    document.getElementById("enable").onclick = async function (e) {
+      e.stopPropagation(); // Prevent double-tap detection
+
+      const btn = this;
+      btn.disabled = true;
+      btn.style.opacity = "0.5";
+
+      try {
+        // Unlock audio
+        alarm.play().then(() => {
+          alarm.pause();
           alarm.currentTime = 0;
           audioUnlocked = true;
         }).catch(e => {

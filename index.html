@@ -8,61 +8,67 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   <link rel="manifest" href="/jadwal-harian/manifest.json">
-  <meta name="theme-color" content="#020617">
+  <meta name="theme-color" content="#000000">
 
   <style>
     @keyframes pulseSoft {
       0%, 100% { opacity: 1 }
-      50% { opacity: .6 }
+      50% { opacity: .7 }
+    }
+    @keyframes glow {
+      0%, 100% { text-shadow: 0 0 20px rgba(99, 102, 241, 0.5), 0 0 40px rgba(99, 102, 241, 0.3); }
+      50% { text-shadow: 0 0 30px rgba(99, 102, 241, 0.8), 0 0 60px rgba(99, 102, 241, 0.5); }
     }
     .pulse-soft {
-      animation: pulseSoft 2s infinite;
+      animation: pulseSoft 2s ease-in-out infinite;
+    }
+    .glow-text {
+      animation: glow 2s ease-in-out infinite;
+    }
+    body {
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
   </style>
 </head>
 
-<body class="bg-slate-950 text-white overflow-hidden">
+<body class="bg-black text-white overflow-hidden">
 
-<!-- FULLSCREEN CENTER -->
-<div class="w-screen h-screen flex items-center justify-center">
+<!-- FULLSCREEN LANDSCAPE CLOCK -->
+<div class="w-screen h-screen flex flex-col items-center justify-center p-6 md:p-8">
 
-  <div class="w-full max-w-3xl px-6 text-center">
+  <!-- CURRENT TIME (small, top) -->
+  <div class="mb-4 md:mb-6">
+    <p id="now" class="text-2xl md:text-3xl font-light tracking-wider text-slate-500"></p>
+  </div>
 
-    <!-- TITLE -->
-    <h1 class="text-sm tracking-widest text-slate-400 mb-4 uppercase">
-      UTBK Focus Mode
-    </h1>
-
-    <!-- CLOCK -->
-    <div class="mb-6">
-      <p id="now" class="text-lg md:text-xl text-slate-300"></p>
+  <!-- COUNTDOWN (HUGE CENTER) -->
+  <div class="flex-1 flex flex-col items-center justify-center">
+    <p id="countdown"
+      class="text-8xl md:text-[12rem] lg:text-[16rem] font-bold tracking-tight text-white glow-text tabular-nums leading-none">
+      00:00:00
+    </p>
+    
+    <!-- Next session info -->
+    <div class="mt-6 md:mt-8 text-center">
+      <p class="text-sm md:text-base text-slate-600 uppercase tracking-widest mb-1">Next Session</p>
+      <p id="nextSession" class="text-2xl md:text-3xl font-medium text-indigo-400"></p>
     </div>
+  </div>
 
-    <!-- COUNTDOWN -->
-    <div class="bg-slate-900/80 border border-slate-700 rounded-3xl py-10 px-6 shadow-xl mb-6">
-
-      <p class="text-sm text-slate-400 mb-2">Sesi berikutnya</p>
-      <p id="nextSession" class="text-xl md:text-2xl font-medium mb-4"></p>
-
-      <p id="countdown"
-        class="text-6xl md:text-7xl font-bold tracking-widest text-indigo-400 pulse-soft">
-        --:--:--
-      </p>
-
-    </div>
-
-    <!-- STATUS -->
-    <p id="status" class="text-sm text-green-400 mb-6">
-      Fokus. Ikuti waktu.
+  <!-- BOTTOM STATUS & BUTTON -->
+  <div class="w-full max-w-md text-center space-y-4">
+    <p id="status" class="text-xs md:text-sm text-slate-500 tracking-wide uppercase">
+      Ready to focus
     </p>
 
-    <!-- ACTION -->
     <button id="enable"
-      class="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 active:scale-95 transition rounded-xl text-sm font-semibold">
-      Aktifkan Notifikasi & Audio
+      class="px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-xs md:text-sm font-medium tracking-wider uppercase transition-all duration-300 backdrop-blur-sm">
+      Enable Notifications
     </button>
-
   </div>
+
 </div>
 
 <!-- AUDIO -->
@@ -109,14 +115,15 @@ function getNextSession() {
 function updateClock() {
   const now = new Date();
   document.getElementById("now").innerText =
-    now.toLocaleTimeString("id-ID");
+    now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
   const next = getNextSession();
+  const countdownEl = document.getElementById("countdown");
 
   if (!next) {
-    document.getElementById("nextSession").innerText =
-      "Tidak ada sesi lagi hari ini";
-    document.getElementById("countdown").innerText = "--:--:--";
+    document.getElementById("nextSession").innerText = "No more sessions today";
+    countdownEl.innerText = "00:00:00";
+    countdownEl.className = "text-8xl md:text-[12rem] lg:text-[16rem] font-bold tracking-tight text-slate-700 tabular-nums leading-none";
     return;
   }
 
@@ -129,17 +136,24 @@ function updateClock() {
   const m = Math.floor(diff / 60000) % 60;
   const s = Math.floor(diff / 1000) % 60;
 
-  document.getElementById("countdown").innerText =
+  countdownEl.innerText =
     `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+
+  // Visual states based on time remaining
+  if (diff <= 60000) { // Last minute - RED
+    countdownEl.className = "text-8xl md:text-[12rem] lg:text-[16rem] font-bold tracking-tight text-red-500 glow-text tabular-nums leading-none";
+  } else if (diff <= 300000) { // Last 5 minutes - YELLOW
+    countdownEl.className = "text-8xl md:text-[12rem] lg:text-[16rem] font-bold tracking-tight text-yellow-400 glow-text tabular-nums leading-none";
+  } else { // Normal - WHITE
+    countdownEl.className = "text-8xl md:text-[12rem] lg:text-[16rem] font-bold tracking-tight text-white glow-text tabular-nums leading-none";
+  }
 
   // AUDIO (FOREGROUND ONLY)
   if (diff <= 1000 && audioUnlocked && !alarmPlayed) {
     alarm.play();
     alarmPlayed = true;
-    document.getElementById("status").innerText =
-      "SESI DIMULAI. KERJA.";
-    document.getElementById("status").className =
-      "text-sm text-red-400";
+    document.getElementById("status").innerText = "SESSION STARTED";
+    document.getElementById("status").className = "text-xs md:text-sm text-red-500 tracking-wide uppercase font-bold pulse-soft";
   }
 }
 
@@ -168,8 +182,8 @@ document.getElementById("enable").onclick = async () => {
     }
   }
 
-  document.getElementById("status").innerText =
-    "Notifikasi aktif. Audio siap.";
+  document.getElementById("status").innerText = "NOTIFICATIONS ACTIVE";
+  document.getElementById("enable").style.display = "none";
 };
 
 function scheduleNotifications(reg) {

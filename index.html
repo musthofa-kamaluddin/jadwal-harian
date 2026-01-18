@@ -7,30 +7,47 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- PWA -->
   <link rel="manifest" href="/jadwal-harian/manifest.json">
   <meta name="theme-color" content="#020617">
 </head>
 
 <body class="bg-slate-950 text-white">
 
+<!-- FIXED WIDGET -->
 <div class="fixed bottom-3 right-3 w-[92%] max-w-sm bg-slate-900 border border-slate-700 rounded-xl p-4">
-  <h1 class="text-sm font-semibold">UTBK Focus</h1>
-  <p class="text-xs text-slate-400 mb-2">Notifikasi jalan di background</p>
+  <h1 class="text-sm font-semibold mb-1">UTBK Focus</h1>
+
+  <p id="now" class="text-xs text-slate-400 mb-2"></p>
+
+  <div class="mb-2">
+    <p class="text-xs text-slate-400">Sesi Berikutnya</p>
+    <p id="nextSession" class="text-sm font-medium"></p>
+  </div>
+
+  <div class="bg-slate-800 rounded-lg p-3 text-center mb-3">
+    <p class="text-xs text-slate-400">Mulai dalam</p>
+    <p id="countdown" class="text-2xl font-bold">--:--:--</p>
+  </div>
 
   <button id="enable"
-    class="w-full mt-2 py-2 bg-indigo-600 rounded text-sm font-medium">
-    Aktifkan Notifikasi
+    class="w-full py-2 bg-indigo-600 rounded text-sm font-medium mb-2">
+    Aktifkan Notifikasi & Audio
   </button>
 
-  <p id="status" class="text-xs mt-2 text-green-400"></p>
+  <p id="status" class="text-xs text-green-400"></p>
 </div>
+
+<!-- AUDIO -->
+<audio id="alarm" src="/jadwal-harian/alarm.mp3" preload="auto"></audio>
 
 <script>
 /* ======================
-   KONFIG GITHUB PAGES
+   KONFIG
    ====================== */
 const BASE_PATH = "/jadwal-harian/";
+const alarm = document.getElementById("alarm");
+let audioUnlocked = false;
+let alarmPlayed = false;
 
 /* ======================
    JADWAL
@@ -49,29 +66,82 @@ function getTodaySchedule() {
 }
 
 /* ======================
-   NOTIFICATION SETUP
+   COUNTDOWN
+   ====================== */
+function getNextSession() {
+  const now = new Date();
+  const today = now.toISOString().split("T")[0];
+  for (const time of getTodaySchedule()) {
+    const t = new Date(`${today}T${time}:00`);
+    if (t > now) return t;
+  }
+  return null;
+}
+
+function updateCountdown() {
+  const now = new Date();
+  document.getElementById("now").innerText =
+    "Sekarang: " + now.toLocaleTimeString("id-ID");
+
+  const next = getNextSession();
+
+  if (!next) {
+    document.getElementById("nextSession").innerText =
+      "Tidak ada sesi lagi hari ini";
+    document.getElementById("countdown").innerText = "--:--:--";
+    return;
+  }
+
+  document.getElementById("nextSession").innerText =
+    next.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+
+  const diff = next - now;
+
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor(diff / 60000) % 60;
+  const s = Math.floor(diff / 1000) % 60;
+
+  document.getElementById("countdown").innerText =
+    `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+
+  // 🔊 PLAY AUDIO TEPAT WAKTU (FOREGROUND)
+  if (diff <= 1000 && audioUnlocked && !alarmPlayed) {
+    alarm.play();
+    alarmPlayed = true;
+    document.getElementById("status").innerText =
+      "SESI DIMULAI. KERJA.";
+    document.getElementById("status").className =
+      "text-xs text-red-400";
+  }
+}
+
+setInterval(updateCountdown, 1000);
+updateCountdown();
+
+/* ======================
+   NOTIFICATION + AUDIO UNLOCK
    ====================== */
 document.getElementById("enable").onclick = async () => {
-  if (!("serviceWorker" in navigator)) {
-    alert("Service Worker tidak didukung browser");
-    return;
+  // unlock audio (WAJIB user interaction)
+  alarm.play().then(() => {
+    alarm.pause();
+    alarm.currentTime = 0;
+    audioUnlocked = true;
+  });
+
+  if ("serviceWorker" in navigator) {
+    const perm = await Notification.requestPermission();
+    if (perm === "granted") {
+      const reg = await navigator.serviceWorker.register(
+        BASE_PATH + "sw.js",
+        { scope: BASE_PATH }
+      );
+      scheduleNotifications(reg);
+    }
   }
-
-  const perm = await Notification.requestPermission();
-  if (perm !== "granted") {
-    alert("Izin notifikasi ditolak");
-    return;
-  }
-
-  const reg = await navigator.serviceWorker.register(
-    BASE_PATH + "sw.js",
-    { scope: BASE_PATH }
-  );
-
-  scheduleNotifications(reg);
 
   document.getElementById("status").innerText =
-    "Notifikasi aktif. Jangan force close PWA.";
+    "Notifikasi aktif. Audio siap.";
 };
 
 function scheduleNotifications(reg) {
@@ -85,7 +155,7 @@ function scheduleNotifications(reg) {
         body: `Waktunya belajar (${time})`,
         tag: time,
         requireInteraction: true,
-        vibrate: [200, 100, 200]
+        vibrate: [200,100,200]
       });
     }
   });

@@ -8,6 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>UTBK Focus Clock</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
   <script src="https://cdn.tailwindcss.com"></script>
 
   <link rel="manifest" href="/jadwal-harian/manifest.json">
@@ -45,6 +49,7 @@
       -webkit-user-select: none;
       user-select: none;
       touch-action: manipulation;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     }
     
     .breathe {
@@ -73,14 +78,14 @@
   </style>
 </head>
 
-<body class="bg-gradient-to-b from-black via-slate-950 to-black">
+<body class="bg-black">
 
 <!-- MAIN CONTAINER -->
 <div id="mainContainer" class="w-full h-full flex flex-col items-center justify-center relative">
 
   <!-- TOP INFO (dismissible) -->
   <div id="topInfo" class="absolute top-0 left-0 right-0 pt-8 pb-4 text-center visible-ui">
-    <p id="now" class="text-xl sm:text-2xl font-light tracking-wider text-slate-700"></p>
+    <p id="now" class="text-2xl sm:text-3xl font-medium tracking-wide text-slate-500"></p>
   </div>
 
   <!-- CENTER: COUNTDOWN -->
@@ -88,15 +93,15 @@
     <div class="text-center">
       <!-- Main Countdown -->
       <p id="countdown"
-        class="font-bold tracking-tight text-blue-50 tabular-nums leading-none mb-6"
-        style="font-size: min(18vw, 14vh); text-shadow: 0 0 40px rgba(147, 197, 253, 0.15);">
+        class="font-black tracking-tight text-white tabular-nums leading-none mb-6"
+        style="font-size: min(18vw, 14vh);">
         00:00:00
       </p>
       
       <!-- Next Session Info -->
       <div id="sessionInfo" class="visible-ui transition-opacity duration-300">
-        <p class="text-xs sm:text-sm text-slate-700 uppercase tracking-[0.3em] mb-2 font-medium">Next Session</p>
-        <p id="nextSession" class="text-2xl sm:text-3xl md:text-4xl font-semibold text-blue-400/80"></p>
+        <p class="text-sm sm:text-base text-slate-500 uppercase tracking-wider mb-2 font-semibold">Next Session</p>
+        <p id="nextSession" class="text-3xl sm:text-4xl md:text-5xl font-bold text-blue-400"></p>
       </div>
     </div>
   </div>
@@ -104,16 +109,16 @@
   <!-- BOTTOM: STATUS & BUTTON (floating, dismissible) -->
   <div id="bottomUI" class="absolute bottom-0 left-0 right-0 pb-12 px-6 text-center visible-ui">
     <div class="max-w-sm mx-auto space-y-4">
-      <p id="status" class="text-sm text-slate-600 tracking-widest uppercase font-light">
+      <p id="status" class="text-sm text-slate-400 tracking-wider uppercase font-semibold">
         Tap to begin
       </p>
 
       <button id="enable"
-        class="w-full max-w-xs px-8 py-4 bg-white/5 hover:bg-white/10 active:bg-white/15 border border-white/20 rounded-2xl text-sm font-medium tracking-widest uppercase transition-all duration-200 shadow-lg shadow-black/50">
+        class="w-full max-w-xs px-8 py-4 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 rounded-2xl text-sm font-bold tracking-wider uppercase transition-all duration-200 text-white shadow-lg">
         Enable Notifications
       </button>
       
-      <p class="text-xs text-slate-800 mt-4">Double tap to hide UI</p>
+      <p class="text-xs text-slate-600 mt-4 font-medium">Double tap to hide UI</p>
     </div>
   </div>
 
@@ -173,8 +178,7 @@ function updateClock() {
   if (!next) {
     document.getElementById("nextSession").innerText = "No more today";
     countdownEl.innerText = "00:00:00";
-    countdownEl.style.color = "#1e293b";
-    countdownEl.style.textShadow = "none";
+    countdownEl.style.color = "#334155";
     return;
   }
 

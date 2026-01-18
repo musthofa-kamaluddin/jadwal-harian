@@ -114,6 +114,7 @@
         opacity: 0.8;
         transform: translateY(0);
       }
+
       to {
         font-size: min(28vw, 20vh);
         opacity: 1;
@@ -175,7 +176,7 @@
     /* ======================
        CONFIG
        ====================== */
-    const BASE_PATH = "/"; // Use root for dev, change to "/jadwal-harian/" for production
+    const BASE_PATH = "/jadwal-harian/"; // Use root for dev, change to "/jadwal-harian/" for production
     const alarm = document.getElementById("alarm");
     let audioUnlocked = false;
     let alarmPlayed = false;
@@ -306,12 +307,12 @@
     function toggleUI() {
       uiVisible = !uiVisible;
       localStorage.setItem("uiVisible", uiVisible); // Persist preference
-      
+
       const topInfo = document.getElementById("topInfo");
       const bottomUI = document.getElementById("bottomUI");
       const sessionInfo = document.getElementById("sessionInfo");
       const countdown = document.getElementById("countdown");
-      
+
       if (uiVisible) {
         topInfo.classList.remove("hidden-ui");
         topInfo.classList.add("visible-ui");

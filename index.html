@@ -95,7 +95,7 @@
       <p id="countdown"
         class="font-black tracking-tight text-white tabular-nums leading-none"
         style="font-size: min(18vw, 14vh);">
-        00:00:00
+        00 : 00 : 00
       </p>
       
       <!-- Next Session Info (compact) -->
@@ -177,7 +177,7 @@ function updateClock() {
 
   if (!next) {
     document.getElementById("nextSession").innerText = "No more today";
-    countdownEl.innerText = "00:00:00";
+    countdownEl.innerText = "00 : 00 : 00";
     countdownEl.style.color = "#334155";
     return;
   }

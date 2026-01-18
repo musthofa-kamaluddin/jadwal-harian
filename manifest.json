@@ -1,7 +1,8 @@
 {
   "name": "UTBK Focus",
   "short_name": "UTBK",
-  "start_url": "./index.html",
+  "start_url": "/jadwal-harian/index.html",
+  "scope": "/utbk-focus/",
   "display": "standalone",
   "background_color": "#020617",
   "theme_color": "#020617"
